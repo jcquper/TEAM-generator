@@ -61,7 +61,7 @@ const employee = [
   
   const team = [];
   
-  functiin addNewMember() {
+  function addNewMember() {
     inquirer
       .prompt({
         type: "confirm",
