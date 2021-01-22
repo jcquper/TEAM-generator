@@ -1,185 +1,127 @@
 const Manager = require("./lib/Manager");
 const Engineer = require("./lib/Engineer");
-const Intern = require(".lib/Intern");
+const Intern = require("./lib/Intern");
 const inquirer = require("inquirer");
 const path = require("path");
 const fs = require("fs");
 
 const OUTPUT_DIR = path.resolve(__dirname, "output");
+const outputPath = path.join(OUTPUT_DIR, "team.html");
+
 const render = require("./lib/htmlRenderer");
 
-// code to use inquirer & gather info about team members
-// creat an object for each team member
-
-let teamMembers = [];
-
-const firstQuestion = {
-    type: "list",
-    message: "Would you like to add a member or generate current team?",
-    name: "Add",
-    choices: ["Add Member", "Generate Team"],
-};
-const questionsYourRole = {
-    type:"list",
-    message: "What member you want too add?",
-    name: "role",
-    choices: ["Intern", "Engineer", "Manager"],
-};
-
-const fileNameQuestion = {
-    type: "input",
-    message: "Please enter vaid file name",
-    name: "fileName",
-};
-
-const Questions = {
-    Manager: [
-        {
-            type: "input",
-            message: "Please enter your name",
-            name: "name",
+const employee = [
+    {
+      type: "list",
+      message:
+        "Select a role for the employee you are adding.",
+      name: "role",
+      choices: ["Manager", "Engineer", "Intern"],
     },
     {
       type: "input",
-      message: "What is your id Number?",
-      name: "id",
-    },
-    {
-      type: "input",
-      message: "What is your email?",
-      name: "email",
-    },
-    {
-      type: "input",
-      message: "What is your office number?",
-      name: "officeNumber",
-    },
-  ],
-  Engineer: [
-    {
-      type: "input",
-      message: "Your name",
+      message: "Enter employees name.",
       name: "name",
     },
     {
       type: "input",
-      message: "What is your id Number?",
+      message: "Enter employees ID number.",
       name: "id",
     },
     {
       type: "input",
-      message: "What is your email?",
+      message: "Enter the email address for employee.",
       name: "email",
     },
+  ];
+  
+  const manager = [
     {
       type: "input",
-      message: "What is your Github userName?",
-      name: "githubUserName",
+      message: "Enter office number for the manager you are adding",
+      name: "office",
     },
-  ],
-  Intern: [
+  ];
+  
+  const engineer = [
     {
       type: "input",
-      message: "Please enter your name",
-      name: "name",
+      message: "Enter the username for the engineers github.",
+      name: "github",
     },
+  ];
+  
+  const intern = [
     {
       type: "input",
-      message: "What is your id Number?",
-      name: "id",
-    },
-    {
-      type: "input",
-      message: "What is your email?",
-      name: "email",
-    },
-    {
-      type: "input",
-      message: "What is your school?",
+      message: "Enter the name of the school for the intern you are adding.",
       name: "school",
     },
-  ],
-};
-
-// After the user has input all employees desired, call the `render` function (required
-// above) and pass in an array containing all employee objects; the `render` function will
-// generate and return a block of HTML including templated divs for each employee!
-
-const startApp = () => {
-  selectRole();
-};
-
-const addOrFinish = () => {
-  inquirer.prompt(firstQuestion).then((answer) => {
-    if (answer.Add === "Add Member") {
-      selectRole();
-    } else {
-      //generateTeam();
-      getFileName();
-    }
-  });
-};
-
-const selectRole = () => {
-  inquirer.prompt(questionsYourRole).then((answer) => {
-    console.log(answer);
-    roleQuestions(Questions[answer.role], answer.role);
-  });
-};
-const roleQuestions = (questions, role) => {
-  inquirer.prompt(questions).then((answer) => {
-    //console.log(answer);
-    let member = {};
-    if (role === "Manager") {
-      member = new Manager(
-        answer.name,
-        answer.id,
-        answer.email,
-        answer.officeNumber
-      );
-    } else if (role === "Engineer") {
-      member = new Engineer(
-        answer.name,
-        answer.id,
-        answer.email,
-        answer.gitHubUserName
-      );
-    } else if (role === "Intern") {
-      member = new Intern(answer.name, answer.id, answer.email, answer.school);
-    }
-    teamMembers.push(member);
-    addOrFinish();
-  });
-};
-console.log(teamMembers);
-
-const getFileName = () => {
-  inquirer.prompt(fileNameQuestion).then((answer) => {
-    if (answer.fileName) {
-      generateTeam(answer.fileName);
-    } else {
-      getFileName();
-    }
-  });
-};
-
-const generateTeam = (fileName) => {
-  const outputPath = path.join(OUTPUT_DIR, fileName + ".html");
-
-  if (!fs.existsSync(OUTPUT_DIR)) {
-    fs.mkdirSync(OUTPUT_DIR);
+  ];
+  
+  const team = [];
+  
+  functiin addNewMember() {
+    inquirer
+      .prompt({
+        type: "confirm",
+        message: "Would you like to add an additional member?",
+        name: "add",
+      })
+      .then(function (response) {
+        if (response.add === true) {
+          memberData();
+        } else {
+          console.log(`You added all members.`);
+          const html = render(team);
+          fs.writeFile(outputPath, html, function (err) {
+            if (err) throw err;
+          });
+        }
+      });
   }
+  
+  function memberData() {
+    inquirer.prompt(employee).then(function (data) {
+      switch (data.role) {
+        case "Manager":
+          inquirer.prompt(manager).then(function (member) {
+            let managerMember = new Manager(
+              data.name,
+              data.id,
+              data.email,
+              member.office
+            );
+            team.push(managerMember);
+            addNewMember();
+          });
+          break;
+        case "Engineer":
+          inquirer.prompt(engineer).then(function (member) {
+            let engineerMember = new Engineer(
+              data.name,
+              data.id,
+              data.email,
+              member.github
+            );
+            team.push(engineerMember);
+            addNewMember();
+          });
+          break;
+        case "Intern":
+          inquirer.prompt(intern).then(function (member) {
+            let internMember = new Intern(
+              data.name,
+              data.id,
+              data.email,
+              member.school
+            );
+            team.push(internMember);
+            addNewMember();
+          });
+      }
+    });
+  }
+  
 
-  fs.writeFileSync(outputPath, render(teamMembers), (err) => {
-    if (err) {
-      console.log(err);
-      getFileName();
-    }
-  });
-};
-
-// const isFileNameValid = (fileName) => {
-//   if(fileName === )
-// }
-
-startApp();
+  addNewMember();
